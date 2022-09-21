@@ -27,6 +27,21 @@ i_list = []
 df_bos = pd.DataFrame()
 df_tavsiye_sehir = pd.DataFrame()
 
+def add_bg_from_url():
+    st.markdown(
+         f"""
+         <style>
+         .stApp {{
+             background-image: url("https://hotpotmedia.s3.us-east-2.amazonaws.com/8-xygPQ0p4A7UH60u.png");
+             background-attachment: fixed;
+             background-size: cover
+         }}
+         </style>
+         """,
+         unsafe_allow_html=True
+     )
+
+add_bg_from_url()
 
 def content_based_recommender(Otel_Adı, cosine_sim, dataframe):
     # index'leri olusturma
