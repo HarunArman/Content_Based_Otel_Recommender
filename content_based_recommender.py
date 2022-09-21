@@ -32,7 +32,7 @@ def add_bg_from_url():
          f"""
          <style>
          .stApp {{
-             background-image: url("https://hotpotmedia.s3.us-east-2.amazonaws.com/8-xygPQ0p4A7UH60u.png");
+             background-image: url("https://www.birhayalinpesinde.com/wp-content/uploads/2018/02/maldivler_oteller.jpg");
              background-attachment: fixed;
              background-size: cover
          }}
