@@ -7,10 +7,22 @@ pd.set_option('display.expand_frame_repr', False)
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 # https://www.kaggle.com/rounakbanik/the-movies-dataset
-df = pd.read_csv("temalar_yorumlar.csv",encoding="utf-8")  # DtypeWarning kapamak icin
+df = pd.read_csv("oteller_ve_yorumlar_son.csv",encoding="utf-8")  # DtypeWarning kapamak icin
 df["Temalar"] = df["Temalar"].fillna("")
 
 koc = {"sehir":["Balıkesir","Muğla"],"tema":["Çocuk Dostu","Açık Havuz"]}
+boga = {"sehir":["Antalya", "Bursa", "Erzurum", "Bolu", "Kocaeli"],"tema":["Doğa", "Kayak","Lüks Otel","Butik Otel","Aquapark"]}
+ikizler = {"sehir":["İzmir", "Balıkesir", "Mersin"],"tema":["Aquapark", "Denize Sıfır", "Butik Otel"]}
+yengec = {"sehir":["İstanbul", "Antalya", "Muğla"],"tema":["Denize sıfır", "Aquapark", "Butik Otel"]}
+aslan = {"sehir":["Antalya", "İzmir"],"tema":["Lüks Otel", "Spa"]}
+basak = {"sehir":["Nevşehir", "İstanbul", "Kocaeli"],"tema":["Spa", "Doğa"]}
+terazi = {"sehir":["Antalya, Bodrum"],"tema":["Lüks Otel"]}
+akrep = {"sehir":["Antalya", "İzmir", "Bursa", "Kocaeli", "Erzurum"],"tema":["Denize Sıfır", "Doğa", "Lüks Otel","Kayak"]}
+yay = {"sehir":["İzmir","Muğla","Antalya","Balıkesir"],"tema":["Spor", "Aquapark", "Doğa", "Ücretsiz Wifi"]}
+oglak = {"sehir":["Antalya", "Muğla", "Aydın"],"tema":["Doğa", "Lüks Otel"]}
+kova = {"sehir":["Antalya", "İzmir", "Muğla"],"tema":["Lüks otel", "Spa", "Aquapark", "Denize Sıfır"]}
+balık = {"sehir":["İzmir", "Muğla", "Bolu", "Balıkesir"],"tema":["Denize sıfır", "Spa", "Lüks Otel"]}
+
 i_list = []
 df_bos = pd.DataFrame()
 df_tavsiye_sehir = pd.DataFrame()
@@ -25,9 +37,9 @@ def content_based_recommender(Otel_Adı, cosine_sim, dataframe):
     # Otel Adı'a gore benzerlik skorlarını hesapalama
     similarity_scores = pd.DataFrame(cosine_sim[movie_index], columns=["score"])
     # kendisi haric ilk 10 filmi getirme
-    movie_indices = similarity_scores.sort_values("score", ascending=False)[1:201].index
+    movie_indices = similarity_scores.sort_values("score", ascending=False)[1:1001].index
     df["Score"] = similarity_scores.sort_values("score", ascending=False)
-    return dataframe[['Otel Adı',"Score","Fiyat","il","Temalar","Images"]].iloc[movie_indices]
+    return dataframe[['Otel Adı',"Score","Fiyat","il","Temalar","Yorum Puan","Images"]].iloc[movie_indices]
 
 
 
@@ -43,37 +55,32 @@ s1 = pd.Series(["Seçiniz"])
 appended_series = s1.append(df["Otel Adı"])
 st.header('Otel Tavsiye Sistemi')
 option_otel = st.selectbox("Daha Önce Konakladığınız Oteli Giriniz",appended_series)
-option_burc = st.selectbox("Burcunuzu Giriniz",["Seçiniz","Koç","Boğa","Yengeç","Terazi",])
+option_burc = st.selectbox("Burcunuzu Giriniz",["Seçiniz","Koç","Boga","İkizler","Yengeç",
+                                                "Aslan","Başak","Terazi","Akrep","Yay","Oglak","Kova","Balık"])
+
+sehir_buton = st.checkbox('Burcun Şehir Etkisini Kapat')
+
+
+burc_dict = {'Koç':koc,'Boga':boga,'İkizler':ikizler,'Yengeç':yengec,'Aslan':aslan,
+             'Başak':basak, 'Terazi':terazi, 'Akrep':akrep, 'Yay':yay,'Oglak':oglak,
+             'Kova':kova, 'Balık':balık}
 
 if st.button("Tavsiyeleri gör"):
-    if option_otel == "Seçiniz" or option_burc == "Seçiniz":
+    if option_otel == "Seçiniz":
         st.warning("Lütfen geçerli bir değer seçiniz.")
-    else:
+
+    elif option_burc == "Seçiniz":
         cosine_sim = calculate_cosine_sim(df)
-        df_tavsiye = content_based_recommender(option_otel,cosine_sim,df)
+        df_tavsiye = content_based_recommender(option_otel, cosine_sim, df)
 
-        if option_burc == "Koç":
-            for k in koc["sehir"]:
-                df_tavsiye_sehir = pd.concat([df_tavsiye[df_tavsiye["il"]==k],df_tavsiye_sehir],axis=0)
-
-
-        df_tavsiye = df_tavsiye_sehir.reset_index()
-
-
-        for i,j in enumerate(df_tavsiye["Temalar"]):
-            for k in koc["tema"]:
-                if k in j:
-                    i_list.append(i)
-
-
-        df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il", "Score","Images"]].iloc[i_list]
+        df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
         df_tavsiye = df_tavsiye.reset_index()
 
         images = list(df_tavsiye["Images"])
 
-        for i in range(len(df_tavsiye.index)):
+        for i in range(0,5):
             st.title(str(i+1)+"- "+df_tavsiye["Otel Adı"][i])
-            st.image(images[i],width=800)
+            st.image(images[i],width=400)
             st.markdown("""
             <style>
             .big-font {
@@ -87,17 +94,92 @@ if st.button("Tavsiyeleri gör"):
                 '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                 + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
             st.markdown(
+                '<p><strong><span style="font-size: 22px;">Otel Puanı: </span></strong> <span style="font-size: 22px;">'
+                + str("{:.2f}".format(df_tavsiye["Yorum Puan"][i])) + '</span></p>', unsafe_allow_html=True)
+            st.markdown(
                 '<p><strong><span style="font-size: 22px;">Benzerlik Skoru: </span></strong> <span style="font-size: 22px;">'
                 + str("{:.2f}".format(df_tavsiye["Score"][i])) + '</span></p>', unsafe_allow_html=True)
 
 
+    else:
+
+        if sehir_buton:
+            cosine_sim = calculate_cosine_sim(df)
+            df_tavsiye = content_based_recommender(option_otel, cosine_sim, df)
+
+            a = burc_dict.get(option_burc)
+
+            for i,j in enumerate(df_tavsiye["Temalar"]):
+                for k in a["tema"]:
+                    if k in j:
+                        i_list.append(i)
 
 
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il", "Score","Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
+            df_tavsiye = df_tavsiye.reset_index()
+
+            images = list(df_tavsiye["Images"])
+
+            for i in range(0,5):
+                st.title(str(i+1)+"- "+df_tavsiye["Otel Adı"][i])
+                st.image(images[i],width=400)
+                st.markdown("""
+                <style>
+                .big-font {
+                    font-size:300px !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                st.markdown('<p><strong><span style="font-size: 22px;">Şehir: </span></strong> <span style="font-size: 22px;">'
+                            + str(df_tavsiye["il"][i])+'</span></p>',unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Benzerlik Skoru: </span></strong> <span style="font-size: 22px;">'
+                    + str("{:.2f}".format(df_tavsiye["Score"][i])) + '</span></p>', unsafe_allow_html=True)
+
+        else:
+            cosine_sim = calculate_cosine_sim(df)
+            df_tavsiye = content_based_recommender(option_otel, cosine_sim, df)
+
+            a = burc_dict.get(option_burc)
+
+            for k in a["sehir"]:
+                df_tavsiye_sehir = pd.concat([df_tavsiye[df_tavsiye["il"] == k], df_tavsiye_sehir], axis=0)
+
+            df_tavsiye = df_tavsiye_sehir.reset_index()
 
 
+            for i, j in enumerate(df_tavsiye["Temalar"]):
+                for k in a["tema"]:
+                    if k in j:
+                        i_list.append(i)
 
-            #df_tavsiye[['Otel Adı', "Fiyat", "il", "Score"]].iloc[i_list]
-            #st.image(
-               # "https://cdn.tatilsepeti.com/Files/TesisResim/07742/tsr07742636958442028934481.jpg",
-              #  width=800,  # Manually Adjust the width of the image as per requirement
-            #)
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il", "Score", "Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
+            df_tavsiye = df_tavsiye.reset_index()
+
+            images = list(df_tavsiye["Images"])
+
+            for i in range(0,5):
+                st.title(str(i + 1) + "- " + df_tavsiye["Otel Adı"][i])
+                st.image(images[i], width=400)
+                st.markdown("""
+                <style>
+                .big-font {
+                    font-size:300px !important;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Şehir: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["il"][i]) + '</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Benzerlik Skoru: </span></strong> <span style="font-size: 22px;">'
+                    + str("{:.2f}".format(df_tavsiye["Score"][i])) + '</span></p>', unsafe_allow_html=True)
+
