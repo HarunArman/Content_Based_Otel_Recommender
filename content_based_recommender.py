@@ -1,31 +1,9 @@
 import pandas as pd
-import numpy as np
 import streamlit as st
-pd.set_option('display.max_columns', None)
-pd.set_option('display.width', 500)
-pd.set_option('display.expand_frame_repr', False)
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-# https://www.kaggle.com/rounakbanik/the-movies-dataset
-df = pd.read_csv("oteller_ve_yorumlar_son.csv",encoding="utf-8")  # DtypeWarning kapamak icin
-df["Temalar"] = df["Temalar"].fillna("")
+from nltk.corpus import stopwords
 
-koc = {"sehir":["Balıkesir","Muğla"],"tema":["Çocuk Dostu","Açık Havuz"]}
-boga = {"sehir":["Antalya", "Bursa", "Erzurum", "Bolu", "Kocaeli"],"tema":["Doğa", "Kayak","Lüks Otel","Butik Otel","Aquapark"]}
-ikizler = {"sehir":["İzmir", "Balıkesir", "Mersin"],"tema":["Aquapark", "Denize Sıfır", "Butik Otel"]}
-yengec = {"sehir":["İstanbul", "Antalya", "Muğla"],"tema":["Denize sıfır", "Aquapark", "Butik Otel"]}
-aslan = {"sehir":["Antalya", "İzmir"],"tema":["Lüks Otel", "Spa"]}
-basak = {"sehir":["Nevşehir", "İstanbul", "Kocaeli"],"tema":["Spa", "Doğa"]}
-terazi = {"sehir":["Antalya, Bodrum"],"tema":["Lüks Otel"]}
-akrep = {"sehir":["Antalya", "İzmir", "Bursa", "Kocaeli", "Erzurum"],"tema":["Denize Sıfır", "Doğa", "Lüks Otel","Kayak"]}
-yay = {"sehir":["İzmir","Muğla","Antalya","Balıkesir"],"tema":["Spor", "Aquapark", "Doğa", "Ücretsiz Wifi"]}
-oglak = {"sehir":["Antalya", "Muğla", "Aydın"],"tema":["Doğa", "Lüks Otel"]}
-kova = {"sehir":["Antalya", "İzmir", "Muğla"],"tema":["Lüks otel", "Spa", "Aquapark", "Denize Sıfır"]}
-balık = {"sehir":["İzmir", "Muğla", "Bolu", "Balıkesir"],"tema":["Denize sıfır", "Spa", "Lüks Otel"]}
-
-i_list = []
-df_bos = pd.DataFrame()
-df_tavsiye_sehir = pd.DataFrame()
 
 def add_bg_from_url():
     st.markdown(
@@ -41,7 +19,6 @@ def add_bg_from_url():
          unsafe_allow_html=True
      )
 
-add_bg_from_url()
 
 def content_based_recommender(Otel_Adı, cosine_sim, dataframe):
     # index'leri olusturma
@@ -54,31 +31,69 @@ def content_based_recommender(Otel_Adı, cosine_sim, dataframe):
     # kendisi haric ilk 10 filmi getirme
     movie_indices = similarity_scores.sort_values("score", ascending=False)[1:1001].index
     df["Score"] = similarity_scores.sort_values("score", ascending=False)
-    return dataframe[['Otel Adı',"Score","Fiyat","il","Temalar","Yorum Puan","Images"]].iloc[movie_indices]
-
+    return dataframe[['Otel Adı',"Score","Fiyat","il","ilçe","Temalar","Yorum Puan","Images"]].iloc[movie_indices]
 
 
 def calculate_cosine_sim(dataframe):
-    tfidf = TfidfVectorizer(stop_words='english')
+    tfidf = TfidfVectorizer(analyzer='word',stop_words=set(stop))
     dataframe['Yorum'] = dataframe['Yorum'].fillna('')
     tfidf_matrix = tfidf.fit_transform(dataframe['Yorum'])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
     return cosine_sim
 
-type(df["Otel Adı"])
+
+add_bg_from_url()
+df = pd.read_csv("oteller_ve_yorumlar_son.csv",encoding="utf-8")  # DtypeWarning kapamak icin
+df["Temalar"] = df["Temalar"].fillna("")
+df = df[df['Otel Adı'].notna()]
+df = df.reset_index()
+
+yorum_list = []
+i_list = []
+df_bos = pd.DataFrame()
+df_tavsiye_sehir = pd.DataFrame()
+
+for text in df.Yorum:
+    text = text.strip()
+    text = text.lower()
+    yorum_list.append(text)
+
+df = df.assign(Yorum=yorum_list)
+
+file1 = open("turkish stop words.txt",'r')
+stop = list(stopwords.words('english'))
+stop.extend(file1.readline().split())
+file1.close()
+
+koc = {"sehir":["Balıkesir","Muğla"],"tema":["Çocuk Dostu","Açık Havuz"]}
+boga = {"sehir":["Antalya", "Bursa", "Erzurum", "Bolu", "Kocaeli"],"tema":["Doğa", "Kayak","Lüks Otel","Butik Otel","Aquapark"]}
+ikizler = {"sehir":["İzmir", "Balıkesir", "Mersin"],"tema":["Aquapark", "Denize Sıfır", "Butik Otel"]}
+yengec = {"sehir":["İstanbul", "Antalya", "Muğla"],"tema":["Denize sıfır", "Aquapark", "Butik Otel"]}
+aslan = {"sehir":["Antalya", "İzmir"],"tema":["Lüks Otel", "Spa"]}
+basak = {"sehir":["Nevşehir", "İstanbul", "Kocaeli"],"tema":["Spa", "Doğa"]}
+terazi = {"sehir":["Antalya", "Muğla"], "tema":["Lüks Otel","Doğa","Spa"]}
+akrep = {"sehir":["Antalya", "İzmir", "Bursa", "Kocaeli", "Erzurum"],"tema":["Denize Sıfır", "Doğa", "Lüks Otel","Kayak"]}
+yay = {"sehir":["İzmir","Muğla","Antalya","Balıkesir"],"tema":["Spor", "Aquapark", "Doğa", "Ücretsiz Wifi"]}
+oglak = {"sehir":["Antalya", "Muğla","Aydın"], "tema":["Lüks Otel","Doğa","Spa"]}
+kova = {"sehir":["Antalya", "İzmir", "Muğla"],"tema":["Lüks otel", "Spa", "Aquapark", "Denize Sıfır"]}
+balık = {"sehir":["İzmir", "Muğla", "Bolu", "Balıkesir"],"tema":["Denize sıfır", "Spa", "Lüks Otel"]}
+
+
 s1 = pd.Series(["Seçiniz"])
 appended_series = s1.append(df["Otel Adı"])
+
 st.header('Otel Tavsiye Sistemi')
+
 option_otel = st.selectbox("Daha Önce Konakladığınız Oteli Giriniz",appended_series)
 option_burc = st.selectbox("Burcunuzu Giriniz",["Seçiniz","Koç","Boga","İkizler","Yengeç",
                                                 "Aslan","Başak","Terazi","Akrep","Yay","Oglak","Kova","Balık"])
 
 sehir_buton = st.checkbox('Burcun Şehir Etkisini Kapat')
 
-
 burc_dict = {'Koç':koc,'Boga':boga,'İkizler':ikizler,'Yengeç':yengec,'Aslan':aslan,
              'Başak':basak, 'Terazi':terazi, 'Akrep':akrep, 'Yay':yay,'Oglak':oglak,
              'Kova':kova, 'Balık':balık}
+
 
 if st.button("Tavsiyeleri gör"):
     if option_otel == "Seçiniz":
@@ -105,6 +120,8 @@ if st.button("Tavsiyeleri gör"):
             """, unsafe_allow_html=True)
             st.markdown('<p><strong><span style="font-size: 22px;">Şehir: </span></strong> <span style="font-size: 22px;">'
                         + str(df_tavsiye["il"][i])+'</span></p>',unsafe_allow_html=True)
+            st.markdown('<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
+                        + str(df_tavsiye["ilçe"][i])+'</span></p>',unsafe_allow_html=True)
             st.markdown(
                 '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                 + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
@@ -130,7 +147,7 @@ if st.button("Tavsiyeleri gör"):
                         i_list.append(i)
 
 
-            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il", "Score","Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score","Images"]].iloc[i_list]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
             df_tavsiye = df_tavsiye.reset_index()
 
@@ -148,6 +165,9 @@ if st.button("Tavsiyeleri gör"):
                 """, unsafe_allow_html=True)
                 st.markdown('<p><strong><span style="font-size: 22px;">Şehir: </span></strong> <span style="font-size: 22px;">'
                             + str(df_tavsiye["il"][i])+'</span></p>',unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["ilçe"][i]) + '</span></p>', unsafe_allow_html=True)
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
@@ -172,7 +192,7 @@ if st.button("Tavsiyeleri gör"):
                     if k in j:
                         i_list.append(i)
 
-            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il", "Score", "Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score", "Images"]].iloc[i_list]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
             df_tavsiye = df_tavsiye.reset_index()
 
@@ -191,6 +211,9 @@ if st.button("Tavsiyeleri gör"):
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">Şehir: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["il"][i]) + '</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["ilçe"][i]) + '</span></p>', unsafe_allow_html=True)
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
