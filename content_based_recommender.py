@@ -3,7 +3,7 @@ import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from nltk.corpus import stopwords
-import nltk 
+import nltk
 nltk.download('stopwords')
 
 def add_bg_from_url():
@@ -43,6 +43,7 @@ def calculate_cosine_sim(dataframe):
     return cosine_sim
 
 
+
 add_bg_from_url()
 df = pd.read_csv("oteller_ve_yorumlar_son.csv",encoding="utf-8")  # DtypeWarning kapamak icin
 df["Temalar"] = df["Temalar"].fillna("")
@@ -53,6 +54,7 @@ yorum_list = []
 i_list = []
 df_bos = pd.DataFrame()
 df_tavsiye_sehir = pd.DataFrame()
+
 
 for text in df.Yorum:
     text = text.strip()
@@ -124,6 +126,9 @@ if st.button("Tavsiyeleri gör"):
             st.markdown('<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
                         + str(df_tavsiye["ilçe"][i])+'</span></p>',unsafe_allow_html=True)
             st.markdown(
+                '<p><strong><span style="font-size: 22px;">Temalar: </span></strong> <span style="font-size: 22px;">'
+                + str(df_tavsiye["Temalar"][i]) + '</span></p>', unsafe_allow_html=True)
+            st.markdown(
                 '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                 + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
             st.markdown(
@@ -148,7 +153,7 @@ if st.button("Tavsiyeleri gör"):
                         i_list.append(i)
 
 
-            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score","Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score","Images","Temalar"]].iloc[i_list]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
             df_tavsiye = df_tavsiye.reset_index()
 
@@ -169,6 +174,9 @@ if st.button("Tavsiyeleri gör"):
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["ilçe"][i]) + '</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Temalar: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["Temalar"][i]) + '</span></p>', unsafe_allow_html=True)
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
@@ -193,7 +201,7 @@ if st.button("Tavsiyeleri gör"):
                     if k in j:
                         i_list.append(i)
 
-            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score", "Images"]].iloc[i_list]
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score", "Images","Temalar"]].iloc[i_list]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
             df_tavsiye = df_tavsiye.reset_index()
 
@@ -215,6 +223,9 @@ if st.button("Tavsiyeleri gör"):
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">İlçe: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["ilçe"][i]) + '</span></p>', unsafe_allow_html=True)
+                st.markdown(
+                    '<p><strong><span style="font-size: 22px;">Temalar: </span></strong> <span style="font-size: 22px;">'
+                    + str(df_tavsiye["Temalar"][i]) + '</span></p>', unsafe_allow_html=True)
                 st.markdown(
                     '<p><strong><span style="font-size: 22px;">Fiyat: </span></strong> <span style="font-size: 22px;">'
                     + str(df_tavsiye["Fiyat"][i]) + ' TL</span></p>', unsafe_allow_html=True)
