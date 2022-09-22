@@ -3,7 +3,8 @@ import streamlit as st
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from nltk.corpus import stopwords
-
+import nltk 
+nltk.download('stopwords')
 
 def add_bg_from_url():
     st.markdown(
