@@ -6,6 +6,16 @@ from nltk.corpus import stopwords
 import nltk
 nltk.download('stopwords')
 
+
+def unique(list1):
+    unique_list = []
+
+    for x in list1:
+        if x not in unique_list:
+            unique_list.append(x)
+
+    return unique_list
+
 def add_bg_from_url():
     st.markdown(
          f"""
@@ -140,7 +150,6 @@ if st.button("Tavsiyeleri gör"):
 
 
     else:
-
         if sehir_buton:
             cosine_sim = calculate_cosine_sim(df)
             df_tavsiye = content_based_recommender(option_otel, cosine_sim, df)
@@ -151,7 +160,6 @@ if st.button("Tavsiyeleri gör"):
                 for k in a["tema"]:
                     if k in j:
                         i_list.append(i)
-
 
             df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score","Images","Temalar"]].iloc[i_list]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
@@ -195,19 +203,19 @@ if st.button("Tavsiyeleri gör"):
 
             df_tavsiye = df_tavsiye_sehir.reset_index()
 
-
             for i, j in enumerate(df_tavsiye["Temalar"]):
                 for k in a["tema"]:
                     if k in j:
                         i_list.append(i)
 
-            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score", "Images","Temalar"]].iloc[i_list]
+            df_tavsiye = df_tavsiye[['Otel Adı', "Fiyat", "il","ilçe", "Score", "Images","Temalar"]].iloc[unique(i_list)]
             df_tavsiye = df_tavsiye.sort_values("Score", ascending=False)
             df_tavsiye = df_tavsiye.reset_index()
 
             images = list(df_tavsiye["Images"])
 
             for i in range(0,5):
+                print(df_tavsiye["Otel Adı"][i])
                 st.title(str(i + 1) + "- " + df_tavsiye["Otel Adı"][i])
                 st.image(images[i], width=400)
                 st.markdown("""
